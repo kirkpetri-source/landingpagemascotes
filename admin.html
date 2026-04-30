@@ -184,21 +184,10 @@
           <option value="botafogo">Botafogo</option>
           <option value="spfc">São Paulo</option>
           <option value="atletico">Atlético-MG</option>
-          <div class="form-group">
-  <label>Time</label>
-  <select id="p-team" required>
-    <option value="flamengo">Flamengo</option>
-    <option value="palmeiras">Palmeiras</option>
-    <option value="corinthians">Corinthians</option>
-    <option value="botafogo">Botafogo</option>
-    <option value="spfc">São Paulo</option>
-    <option value="atletico">Atlético-MG</option>
-    <option value="outros">Outros / Especial</option>
-    <option id="custom-team" value="custom">
-      <input type="text" id="custom-team-input" placeholder="Digite o time aqui">
-    </option>
-  </select>
-</div>
+          <option value="outros">Outros / Especial</option>
+        </select>
+        <input type="text" id="custom-team-input" placeholder="Digite o time personalizado aqui" style="display:none; margin-top:8px; width:100%; padding:10px; border:1px solid var(--border); border-radius:6px; font-size:14px; box-sizing:border-box;">
+      </div>
         </select>
       </div>
       
@@ -351,12 +340,14 @@
   // Handle team selection
   document.getElementById('p-team').addEventListener('change', (e) => {
     const customTeamInput = document.getElementById('custom-team-input');
-    if (e.target.value === 'custom') {
+    if (e.target.value === 'outros') {
       customTeamInput.style.display = 'block';
       customTeamInput.required = true;
+      customTeamInput.focus();
     } else {
       customTeamInput.style.display = 'none';
       customTeamInput.required = false;
+      customTeamInput.value = '';
     }
   });
 
@@ -447,9 +438,20 @@
     showLoader("Salvando...");
 
     const id = document.getElementById('doc-id').value;
+    let teamValue = document.getElementById('p-team').value;
+    if (teamValue === 'outros') {
+      const customTeam = document.getElementById('custom-team-input').value.trim();
+      if (customTeam) {
+        teamValue = customTeam.toLowerCase().replace(/\s+/g, '-');
+      } else {
+        alert('Por favor, digite o nome do time personalizado.');
+        return;
+      }
+    }
+
     const productData = {
       name: document.getElementById('p-name').value,
-      team: document.getElementById('p-team').value,
+      team: teamValue,
       price: document.getElementById('p-price').value,
       info: document.getElementById('p-info').value,
       timestamp: firebase.firestore.FieldValue.serverTimestamp()
@@ -495,7 +497,25 @@
     document.getElementById('form-title').innerText = "Editar Produto";
     document.getElementById('doc-id').value = id;
     document.getElementById('p-name').value = data.name;
-    document.getElementById('p-team').value = data.team;
+
+    // Handle team selection for editing
+    const teamSelect = document.getElementById('p-team');
+    const customTeamInput = document.getElementById('custom-team-input');
+    const predefinedTeams = ['flamengo', 'palmeiras', 'corinthians', 'botafogo', 'spfc', 'atletico', 'outros'];
+
+    if (predefinedTeams.includes(data.team)) {
+      teamSelect.value = data.team;
+      customTeamInput.style.display = 'none';
+      customTeamInput.required = false;
+      customTeamInput.value = '';
+    } else {
+      // It's a custom team
+      teamSelect.value = 'outros';
+      customTeamInput.style.display = 'block';
+      customTeamInput.required = true;
+      customTeamInput.value = data.team.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()); // Convert back to display format
+    }
+
     document.getElementById('p-price').value = data.price;
     document.getElementById('p-info').value = data.info;
     
