@@ -12,3 +12,4 @@ if (!firebase.apps.length) {
 }
 const db = firebase.firestore();
 const storage = firebase.storage();
+const auth = firebase.auth ? firebase.auth() : null;

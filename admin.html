@@ -54,7 +54,7 @@
   /* Form */
   .form-group { margin-bottom: 16px; }
   label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text-soft); }
-  input[type="text"], input[type="number"], select, textarea {
+  input[type="text"], input[type="number"], input[type="password"], select, textarea {
     width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; box-sizing: border-box;
   }
   textarea { resize: vertical; min-height: 80px; }
@@ -88,15 +88,60 @@
   #loader { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 100; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; }
   .spinner { border: 3px solid #f3f3f3; border-top: 3px solid var(--primary); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin-bottom: 12px; }
   @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+  .login-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    box-sizing: border-box;
+  }
+  .login-card {
+    width: 100%;
+    max-width: 360px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    padding: 28px;
+  }
+  .login-card h1 { font-size: 22px; margin-bottom: 8px; }
+  .login-card p { margin: 0 0 22px; color: var(--text-soft); font-size: 14px; }
+  .login-error { display: none; color: var(--danger); font-size: 13px; margin: -4px 0 14px; }
+  .admin-app { display: none; }
+  .admin-app.authenticated { display: block; }
 </style>
 </head>
 <body>
 
 <div id="loader"><div class="spinner"></div><span id="loader-text">Carregando...</span></div>
 
+<main class="login-screen" id="login-screen">
+  <form class="login-card" id="login-form">
+    <h1>Acesso Admin</h1>
+    <p>Entre com o usuário e senha cadastrados no Firebase para gerenciar os produtos.</p>
+    <div class="form-group">
+      <label for="login-user">Usuário</label>
+      <input type="text" id="login-user" autocomplete="username" required autofocus>
+    </div>
+    <div class="form-group">
+      <label for="login-password">Senha</label>
+      <input type="password" id="login-password" autocomplete="current-password" required>
+    </div>
+    <div class="login-error" id="login-error">Usuário ou senha inválidos.</div>
+    <button type="submit" class="btn">Entrar</button>
+  </form>
+</main>
+
+<div class="admin-app" id="admin-app">
+
 <header>
   <h1>Admin Mascotes</h1>
-  <a href="index.html" target="_blank" style="color: var(--primary); font-weight: 600; text-decoration: none; font-size: 14px;">Ver Site</a>
+  <div style="display:flex; gap:12px; align-items:center;">
+    <a href="index.html" target="_blank" style="color: var(--primary); font-weight: 600; text-decoration: none; font-size: 14px;">Ver Site</a>
+    <button type="button" id="logout-btn" class="btn btn-outline" style="width:auto; padding:8px 12px;">Sair</button>
+  </div>
 </header>
 
 <div class="container">
@@ -169,9 +214,11 @@
     </form>
   </div>
 </div>
+</div>
 
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
 <script src="js/firebase-config.js"></script>
@@ -179,9 +226,17 @@
 <script>
   let currentImages = []; // Armazena as URLs atuais do produto sendo editado
   let filesToUpload = []; // Arquivos novos aguardando upload
+  let productsLoaded = false;
+
+  const ADMIN_USER = 'admin';
+  const ADMIN_EMAIL = 'admin@liontech.local';
 
   const loader = document.getElementById('loader');
   const loaderText = document.getElementById('loader-text');
+  const loginScreen = document.getElementById('login-screen');
+  const loginForm = document.getElementById('login-form');
+  const loginError = document.getElementById('login-error');
+  const adminApp = document.getElementById('admin-app');
   const tableBody = document.querySelector('#products-table tbody');
   const form = document.getElementById('product-form');
   const uploadBtn = document.getElementById('upload-btn');
@@ -190,6 +245,53 @@
 
   function showLoader(text) { loaderText.innerText = text; loader.style.display = 'flex'; }
   function hideLoader() { loader.style.display = 'none'; }
+
+  function showAdmin() {
+    loginScreen.style.display = 'none';
+    adminApp.classList.add('authenticated');
+    if(!productsLoaded) {
+      productsLoaded = true;
+      loadProducts();
+    }
+  }
+
+  loginForm.onsubmit = async (e) => {
+    e.preventDefault();
+    loginError.style.display = 'none';
+    showLoader('Entrando...');
+
+    const user = document.getElementById('login-user').value.trim();
+    const password = document.getElementById('login-password').value;
+    const email = user === ADMIN_USER ? ADMIN_EMAIL : user;
+
+    try {
+      const credential = await auth.signInWithEmailAndPassword(email, password);
+      if(credential.user.email !== ADMIN_EMAIL) {
+        await auth.signOut();
+        throw new Error('unauthorized-user');
+      }
+    } catch (error) {
+      console.error(error);
+      hideLoader();
+      loginError.style.display = 'block';
+      document.getElementById('login-password').value = '';
+    }
+  };
+
+  document.getElementById('logout-btn').onclick = async () => {
+    await auth.signOut();
+  };
+
+  auth.onAuthStateChanged(user => {
+    hideLoader();
+    if(user && user.email === ADMIN_EMAIL) {
+      showAdmin();
+      return;
+    }
+
+    adminApp.classList.remove('authenticated');
+    loginScreen.style.display = 'flex';
+  });
 
   // LOAD PRODUCTS
   function loadProducts() {
@@ -345,7 +447,7 @@
   }
 
   // Init
-  loadProducts();
+  showLoader('Verificando acesso...');
 </script>
 </body>
 </html>
