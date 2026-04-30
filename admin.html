@@ -184,7 +184,21 @@
           <option value="botafogo">Botafogo</option>
           <option value="spfc">São Paulo</option>
           <option value="atletico">Atlético-MG</option>
-          <option value="outros">Outros / Especial</option>
+          <div class="form-group">
+  <label>Time</label>
+  <select id="p-team" required>
+    <option value="flamengo">Flamengo</option>
+    <option value="palmeiras">Palmeiras</option>
+    <option value="corinthians">Corinthians</option>
+    <option value="botafogo">Botafogo</option>
+    <option value="spfc">São Paulo</option>
+    <option value="atletico">Atlético-MG</option>
+    <option value="outros">Outros / Especial</option>
+    <option id="custom-team" value="custom">
+      <input type="text" id="custom-team-input" placeholder="Digite o time aqui">
+    </option>
+  </select>
+</div>
         </select>
       </div>
       
@@ -334,20 +348,92 @@
     fileInput.value = '';
   };
 
+  // Handle team selection
+  document.getElementById('p-team').addEventListener('change', (e) => {
+    const customTeamInput = document.getElementById('custom-team-input');
+    if (e.target.value === 'custom') {
+      customTeamInput.style.display = 'block';
+      customTeamInput.required = true;
+    } else {
+      customTeamInput.style.display = 'none';
+      customTeamInput.required = false;
+    }
+  });
+
   function renderPreviews() {
     previewGrid.innerHTML = '';
-    // Show existing cloud images
+    // Create a combined array for all images
+    let allImages = [];
+    // Add existing cloud images
     currentImages.forEach((url, i) => {
-      const div = document.createElement('div');
-      div.className = 'preview-item';
-      div.innerHTML = `<img src="${url}"><div class="remove" onclick="removeCurrentImage(${i})">x</div>`;
-      previewGrid.appendChild(div);
+      allImages.push({ type: 'current', data: url, index: i });
     });
-    // Show new files
+    // Add new files
     filesToUpload.forEach((file, i) => {
+      allImages.push({ type: 'new', data: file, index: i });
+    });
+
+    // Render all images
+    allImages.forEach((image, idx) => {
       const div = document.createElement('div');
       div.className = 'preview-item';
-      div.innerHTML = `<img src="${URL.createObjectURL(file)}"><div class="remove" onclick="removeNewFile(${i})">x</div>`;
+      div.draggable = true;
+      div.dataset.index = idx;
+      
+      // Add drag events
+      div.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', idx);
+      });
+      
+      div.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        const draggedElement = e.target.closest('.preview-item');
+        if (draggedElement) {
+          draggedElement.style.opacity = '0.5';
+        }
+      });
+      
+      div.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const draggedIndex = parseInt(e.dataTransfer.getData('text/plain'));
+        const targetIndex = parseInt(e.currentTarget.dataset.index);
+        
+        // Reorder images
+        if (draggedIndex !== targetIndex) {
+          const draggedItem = allImages[draggedIndex];
+          allImages.splice(draggedIndex, 1);
+          allImages.splice(targetIndex, 0, draggedItem);
+          
+          // Update arrays
+          currentImages = [];
+          filesToUpload = [];
+          allImages.forEach(item => {
+            if (item.type === 'current') {
+              currentImages.push(item.data);
+            } else {
+              filesToUpload.push(item.data);
+            }
+          });
+          
+          renderPreviews();
+        }
+        
+        const draggedElement = e.target.closest('.preview-item');
+        if (draggedElement) {
+          draggedElement.style.opacity = '1';
+        }
+      });
+      
+      div.addEventListener('dragend', (e) => {
+        e.target.style.opacity = '1';
+      });
+      
+      // Add image content
+      if (image.type === 'current') {
+        div.innerHTML = `<img src="${image.data}"><div class="remove" onclick="removeCurrentImage(${image.index})">x</div>`;
+      } else {
+        div.innerHTML = `<img src="${URL.createObjectURL(image.data)}"><div class="remove" onclick="removeNewFile(${image.index})">x</div>`;
+      }
       previewGrid.appendChild(div);
     });
   }
