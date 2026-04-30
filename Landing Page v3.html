@@ -8,6 +8,21 @@
 <style>
 .hv{align-items:flex-start!important}
 .hv video{mix-blend-mode:screen!important;filter:brightness(1.15) contrast(1.1)!important;height:88vh!important;object-fit:contain!important;object-position:center top!important;max-width:580px!important;width:100%!important;display:block!important}
+/* Lightbox */
+#lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9999; display: none; align-items: center; justify-content: center; flex-direction: column; }
+#lightbox.active { display: flex; }
+.lb-close { position: absolute; top: 20px; right: 30px; color: white; font-size: 30px; cursor: pointer; z-index: 10000; }
+.lb-content { position: relative; max-width: 90%; max-height: 70vh; display: flex; align-items: center; justify-content: center; }
+.lb-content img { max-width: 100%; max-height: 70vh; object-fit: contain; border-radius: 8px; }
+.lb-prev, .lb-next { position: absolute; top: 50%; transform: translateY(-50%); color: white; font-size: 40px; cursor: pointer; user-select: none; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; }
+.lb-prev { left: -60px; } .lb-next { right: -60px; }
+@media (max-width: 768px) { .lb-prev { left: 10px; } .lb-next { right: 10px; } }
+.lb-thumbs { display: flex; gap: 10px; margin-top: 20px; overflow-x: auto; max-width: 90%; padding-bottom: 10px; }
+.lb-thumb { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; cursor: pointer; opacity: 0.5; transition: opacity 0.2s; }
+.lb-thumb.active, .lb-thumb:hover { opacity: 1; border: 2px solid #fff; }
+.cimg { cursor: pointer; position: relative; }
+.cimg::after { content: '🔍 Ampliar'; position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.6); color: white; font-size: 11px; padding: 4px 8px; border-radius: 4px; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+.cimg:hover::after { opacity: 1; }
 </style>
 </head>
 <body>
@@ -117,37 +132,58 @@
   <span class="fc">© 2025 Lion Tech · Todos os direitos reservados</span>
 </footer>
 
+<!-- Lightbox HTML -->
+<div id="lightbox">
+  <div class="lb-close" onclick="closeLightbox()">✕</div>
+  <div class="lb-content">
+    <div class="lb-prev" onclick="changeLbImage(-1)" id="lb-prev" style="display:none;">❮</div>
+    <img id="lb-img" src="">
+    <div class="lb-next" onclick="changeLbImage(1)" id="lb-next" style="display:none;">❯</div>
+  </div>
+  <div class="lb-thumbs" id="lb-thumbs"></div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+<script src="js/firebase-config.js"></script>
 
 <script>
 // ── PRODUCT DATA ──
-const DEFAULT_PRODUCTS = [
-  {id:1, team:'flamengo', name:'Urubu Guerreiro', img:'uploads/D_NQ_NP_2X_684550-MLB109214949258_042026-F.webp', info:'Impressão 3D colorida · ~25cm', price:'R$ 189'},
-  {id:2, team:'palmeiras', name:'Porco Verdão', img:'uploads/D_NQ_NP_2X_642088-MLB110527036977_042026-F.webp', info:'Impressão 3D colorida · ~25cm', price:'R$ 189'},
-  {id:3, team:'corinthians', name:'Fiel Campeão', img:'uploads/D_NQ_NP_2X_884666-MLB83284076912_042025-F.webp', info:'Impressão 3D colorida · ~20cm', price:'R$ 169'},
-  {id:4, team:'botafogo', name:'Manequinho', img:'uploads/D_NQ_NP_2X_602055-MLB89286823473_082025-F.webp', info:'Impressão 3D colorida · ~22cm', price:'R$ 169'},
-  {id:5, team:'atletico', name:'Galo Guerreiro', img:'uploads/D_NQ_NP_2X_671488-MLB108486077478_032026-F.webp', info:'Impressão 3D colorida · ~25cm', price:'R$ 189'},
-  {id:6, team:'spfc', name:'Tricolor Eterno', img:'uploads/D_NQ_NP_2X_679873-MLB110392385979_042026-F.webp', info:'Impressão 3D colorida · ~25cm', price:'R$ 189'},
-  {id:7, team:'flamengo', name:'Urubu Raça', img:'uploads/D_NQ_NP_2X_846589-MLB88928899178_082025-F.webp', info:'Impressão 3D colorida · ~28cm', price:'R$ 219'},
-  {id:8, team:'palmeiras', name:'Porco Alviverde', img:'uploads/D_NQ_NP_2X_753270-MLA110527286571_042026-F.webp', info:'Impressão 3D colorida · ~28cm', price:'R$ 219'},
-  {id:9, team:'outros', name:'Mascote Especial', img:'uploads/D_NQ_NP_2X_698362-MLB108484793096_032026-F.webp', info:'Impressão 3D colorida · ~22cm', price:'R$ 179'},
-  {id:10, team:'outros', name:'Coleção Especial', img:'uploads/D_NQ_NP_2X_900389-MLB109287176533_032026-F.webp', info:'Impressão 3D colorida · ~25cm', price:'R$ 199'},
-  {id:11, team:'corinthians', name:'Fiel Eterno', img:'uploads/D_NQ_NP_2X_998396-MLB89286813609_082025-F.webp', info:'Impressão 3D colorida · ~25cm', price:'R$ 189'},
-  {id:12, team:'outros', name:'Mascote Miniatura', img:'uploads/D_NQ_NP_2X_871593-MLB109215981592_042026-F.webp', info:'Impressão 3D colorida · Pequeno', price:'R$ 59'}
-];
-
 const TEAM_LABELS = {flamengo:'Flamengo',palmeiras:'Palmeiras',corinthians:'Corinthians',botafogo:'Botafogo',spfc:'São Paulo',atletico:'Atlético-MG',outros:'Outros'};
 
-function getProducts(){ try{const s=localStorage.getItem('lt_products'); return s?JSON.parse(s):DEFAULT_PRODUCTS;}catch(e){return DEFAULT_PRODUCTS;} }
+let allProducts = [];
+
+// Load products from Firestore
+function loadProducts() {
+  db.collection('products').orderBy('timestamp', 'desc').onSnapshot(snapshot => {
+    allProducts = [];
+    snapshot.forEach(doc => {
+      allProducts.push({ id: doc.id, ...doc.data() });
+    });
+    // Restore current filter or default to 'all'
+    const activeBtn = document.querySelector('.fbtn.on');
+    const filter = activeBtn ? activeBtn.dataset.f : 'all';
+    renderProducts(filter);
+  }, err => {
+    console.error("Erro ao carregar produtos:", err);
+  });
+}
 
 function renderProducts(filter){
-  var products = getProducts();
   var grid = document.getElementById('pg');
   if(!grid) return;
   var html = '';
-  products.forEach(function(p){
+  if(allProducts.length === 0) {
+    grid.innerHTML = '<p style="grid-column: 1/-1; text-align:center; color:#fff;">Nenhum produto cadastrado na nuvem ainda.</p>';
+    return;
+  }
+  allProducts.forEach(function(p, index){
     var hidden = (filter && filter!=='all' && p.team!==filter)?'hidden':'';
+    var mainImg = (p.images && p.images.length > 0) ? p.images[0] : 'uploads/LOGO CHAVEIRO.png';
     html += '<div class="card '+hidden+'" data-team="'+p.team+'">' +
-      '<div class="cimg"><img src="'+p.img+'" alt="'+p.name+'"></div>' +
+      '<div class="cimg" onclick="openLightbox('+index+')"><img src="'+mainImg+'" alt="'+p.name+'"></div>' +
       '<div class="cb"><div class="ctm">'+(TEAM_LABELS[p.team]||p.team)+'</div>' +
       '<div class="cn">'+p.name+'</div>' +
       '<div class="ci">'+p.info+'</div></div>' +
@@ -157,12 +193,69 @@ function renderProducts(filter){
   grid.innerHTML = html;
 }
 
+// Lightbox Logic
+let currentLbImages = [];
+let currentLbIndex = 0;
+
+function openLightbox(productIndex) {
+  const p = allProducts[productIndex];
+  if(!p || !p.images || p.images.length === 0) return;
+  
+  currentLbImages = p.images;
+  currentLbIndex = 0;
+  
+  document.getElementById('lightbox').classList.add('active');
+  updateLightbox();
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('active');
+}
+
+function changeLbImage(dir) {
+  currentLbIndex += dir;
+  if(currentLbIndex < 0) currentLbIndex = currentLbImages.length - 1;
+  if(currentLbIndex >= currentLbImages.length) currentLbIndex = 0;
+  updateLightbox();
+}
+
+function setLbImage(index) {
+  currentLbIndex = index;
+  updateLightbox();
+}
+
+function updateLightbox() {
+  const imgEl = document.getElementById('lb-img');
+  const prevBtn = document.getElementById('lb-prev');
+  const nextBtn = document.getElementById('lb-next');
+  const thumbsContainer = document.getElementById('lb-thumbs');
+  
+  imgEl.src = currentLbImages[currentLbIndex];
+  
+  if(currentLbImages.length > 1) {
+    prevBtn.style.display = 'flex';
+    nextBtn.style.display = 'flex';
+    
+    // Thumbs
+    let thumbsHtml = '';
+    currentLbImages.forEach((url, i) => {
+      thumbsHtml += '<img src="'+url+'" class="lb-thumb '+(i===currentLbIndex?'active':'')+'" onclick="setLbImage('+i+')">';
+    });
+    thumbsContainer.innerHTML = thumbsHtml;
+  } else {
+    prevBtn.style.display = 'none';
+    nextBtn.style.display = 'none';
+    thumbsContainer.innerHTML = '';
+  }
+}
+
 // Admin redirect
 if(window.location.hash === '#admin') { window.location.href = 'admin.html'; }
+
+// Init load
+loadProducts();
 </script>
 <script>
-// Render products
-renderProducts('all');
 
 // Marquee
 (function(){
