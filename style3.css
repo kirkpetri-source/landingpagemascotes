@@ -43,9 +43,9 @@ h1 em{font-style:normal;color:var(--gold);display:block}
 .mqd{width:5px;height:5px;border-radius:50%;background:#0b1a0e;opacity:.3}
 @keyframes mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 .ls{display:grid;grid-template-columns:1fr 1fr;background:var(--gm);overflow:hidden;border-top:3px solid var(--gold)}
-.lsi{overflow:hidden;min-height:500px;background:#fff;display:flex;align-items:center;justify-content:center;padding:80px}
-.lsi img{width:80%;height:80%;max-width:400px;object-fit:contain;transition:transform .5s}
-.lsi:hover img{transform:scale(1.08)}
+.lsi{overflow:hidden;min-height:500px;background:#fff;display:flex;align-items:center;justify-content:center;padding:40px}
+.lsi img{width:100%;height:100%;max-width:520px;object-fit:contain;transition:transform .5s}
+.lsi:hover img{transform:scale(1.06)}
 .lst{padding:60px 48px;display:flex;flex-direction:column;justify-content:center}
 .ll{font-family:'Oswald',sans-serif;font-size:.8rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:14px}
 .lth2{font-family:'Oswald',sans-serif;font-size:clamp(1.8rem,3vw,2.6rem);font-weight:700;text-transform:uppercase;line-height:1.05;color:var(--tl);margin-bottom:18px}
