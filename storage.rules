@@ -10,6 +10,14 @@ service firebase.storage {
         && request.resource.size < 10 * 1024 * 1024;
     }
 
+    match /hero/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin()
+        && request.resource != null
+        && (request.resource.contentType.matches('image/.*') || request.resource.contentType.matches('video/.*'))
+        && request.resource.size < 50 * 1024 * 1024; // Permitir até 50MB para vídeos
+    }
+
     match /{allPaths=**} {
       allow read: if true;
       allow write: if false;

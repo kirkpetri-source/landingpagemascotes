@@ -7,8 +7,14 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    match /config/{document} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /{document=**} {
-      allow read, write: if false;
+      allow read: if true; // Permitir leitura de tudo por padrão
+      allow write: if false;
     }
 
     function isAdmin() {
