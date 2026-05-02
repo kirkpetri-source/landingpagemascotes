@@ -195,7 +195,7 @@ function renderProducts(filter){
       '<div class="cn">'+p.name+'</div>' +
       '<div class="ci">'+p.info+'</div></div>' +
       '<div class="cf"><div class="cp"><small>a partir de</small>'+p.price+'</div>' +
-      '<a class="cbtn" href="https://wa.me/5564999555364?text='+encodeURIComponent('Olá! Tenho interesse no *'+p.name+'* ('+tl+'). Gostaria de fazer um pedido!')+'" target="_blank">Comprar</a></div></div>';
+      '<a class="cbtn" href="https://wa.me/5564999555364?text='+encodeURIComponent('Olá! Tenho interesse no *'+p.name+'* ('+(TEAM_LABELS[p.team]||p.team)+'). Gostaria de fazer um pedido!')+'" target="_blank">Comprar</a></div></div>';
   });
   grid.innerHTML = html;
 }
