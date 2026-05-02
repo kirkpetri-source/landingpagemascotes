@@ -107,17 +107,72 @@ footer{background:var(--gd);padding:40px 5%;border-top:3px solid var(--gold);dis
 .fc{font-size:.82rem;color:rgba(245,244,236,.45)}
 @media(max-width:860px){
   .nr .nla{display:none}
-  .hero{grid-template-columns:1fr;padding:70px 5% 0;text-align:center}
+
+  /* Hero: sem altura mínima forçada */
+  .hero{grid-template-columns:1fr;padding:72px 5% 48px;text-align:center;gap:24px;min-height:auto}
   .he{justify-content:center}
   .ha{justify-content:center}
-  .hst{justify-content:center;flex-wrap:wrap}
-  .hv{order:-1;margin-bottom:20px}
+  .hv{order:-1}
   .hv img{height:300px;border-radius:var(--r)}
+
+  /* Stats: 3 na mesma linha */
+  .hst{justify-content:center;flex-wrap:nowrap;gap:0;margin-top:28px;padding-top:24px;justify-content:space-around}
+  .hst strong{font-size:1.4rem}
+  .hst span{font-size:.68rem}
+
+  /* Delivery strip: coluna simples */
+  .delivery-strip{flex-direction:column;gap:0;padding:0}
+  .del-sep{display:none}
+  .del-item{padding:16px 5%;border-bottom:1px solid rgba(240,192,64,.08)}
+  .del-item:last-child{border-bottom:none}
+
+  /* Lifestyle */
   .ls{grid-template-columns:1fr}
-  .lst{padding:40px 5%}
-  .sec{padding:64px 5%}
+  .lsi{min-height:260px;padding:24px}
+  .lst{padding:36px 5%}
+
+  /* Sections */
+  .sec{padding:52px 5%}
   .fg{grid-template-columns:1fr}
+
+  /* Filtros: scroll horizontal */
+  .fb{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:6px;margin:24px 0 32px}
+  .fb::-webkit-scrollbar{display:none}
+  .fbtn{flex-shrink:0}
+
+  /* CTA */
+  .ctaw{padding:44px 5%;border-radius:14px}
+  .ctab{flex-direction:column;align-items:stretch;gap:10px}
+  .bd2,.bo2{width:100%;text-align:center;box-sizing:border-box}
+
   footer{flex-direction:column;text-align:center}
+}
+
+@media(max-width:480px){
+  /* Hero */
+  .hero{padding:68px 4% 40px;gap:20px}
+  .hst strong{font-size:1.2rem}
+  .hst span{font-size:.62rem;letter-spacing:.04em}
+  .ha{flex-direction:column;align-items:center;gap:10px}
+  .bp,.bg{width:100%;text-align:center;padding:14px 20px}
+
+  /* Sections */
+  .sec{padding:40px 4%}
+  .lst{padding:28px 4%}
+  .lsi{min-height:220px;padding:16px}
+  .lth2{font-size:1.6rem}
+
+  /* Cards 1 por linha */
+  .grid{grid-template-columns:1fr;gap:14px}
+  .cimg{height:240px}
+
+  /* CTA */
+  .ctat{font-size:1.6rem}
+  .ctas{font-size:.95rem}
+  .feat{padding:22px 18px}
+
+  footer{padding:28px 4%;gap:12px}
+  .fc{font-size:.78rem}
 }
 /* ── ANIMATED BG PARTICLES ── */
 .hero-particles{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}
