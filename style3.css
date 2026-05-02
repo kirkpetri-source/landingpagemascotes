@@ -121,9 +121,9 @@ footer{background:var(--gd);padding:40px 5%;border-top:3px solid var(--gold);dis
   .hst span{font-size:.68rem}
 
   /* Delivery strip: coluna simples */
-  .delivery-strip{flex-direction:column;gap:0;padding:0}
-  .del-sep{display:none}
-  .del-item{padding:16px 5%;border-bottom:1px solid rgba(240,192,64,.08)}
+  .delivery-strip{flex-direction:column;gap:0!important;padding:0;align-items:stretch}
+  .del-sep{display:none!important}
+  .del-item{padding:14px 5%;border-bottom:1px solid rgba(240,192,64,.1)}
   .del-item:last-child{border-bottom:none}
 
   /* Lifestyle */
